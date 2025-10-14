@@ -40,6 +40,8 @@
     "files.associations": {
         "string.h": "c",
         "audio.h": "c",
-        "random": "c"
+        "random": "c",
+        "sdcard.h": "c",
+        "picocalc.h": "c"
     }
 }

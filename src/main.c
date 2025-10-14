@@ -29,20 +29,22 @@
 #define ENABLE_SDCARD 1               // Enable SD card for ROM and save storage
 #define PEANUT_GB_HIGH_LCD_ACCURACY 1 // Use high accuracy LCD emulation
 #define PEANUT_GB_USE_BIOS 0          // Don't use GB BIOS (use built-in boot code)
-#define PEANUT_FULL_GBC_SUPPORT 0     // Disable full Game Boy Color support
+#define PEANUT_FULL_GBC_SUPPORT 1     // Disable full Game Boy Color support
 #if PICO_RP2040
     #define VREG_VOLT VREG_VOLTAGE_1_15
     #define SYS_CLK_FREQ 266 * MHZ        // Set system clock to 300 MHz
 #elif PICO_RP2350
     #define VREG_VOLT VREG_VOLTAGE_1_30
-    #define SYS_CLK_FREQ 300 * MHZ        // Set system clock to 300 MHz
+    #define SYS_CLK_FREQ 360 * MHZ        // Set system clock to 300 MHz
 #endif
 
-#define ENABLE_DEBUG 1                // Enable debug output
+//#define ENABLE_DEBUG 0                // Enable debug output
 
 /* Display hardware configuration */
 #define USE_ILI9225 0                 // Disable ILI9225 display driver
 #define USE_ILI9488 1                 // Enable ILI9488 display driver
+//#define LCD_BAUDRATE 75000000       // Set SPI baud rate for LCD
+#define LCD_BAUDRATE 80000000         // Set fast SPI baud rate for LCD
 
 /**
  * VSYNC Timing Configuration
@@ -793,7 +795,7 @@ uint16_t rom_file_selector_display_page(char filename[22][256], uint16_t num_pag
 
     /* search *.gb files */
     uint16_t num_file = 0;
-    fr = f_findfirst(&dj, &fno, ".", "?*.gb");
+    fr = f_findfirst(&dj, &fno, ".", "?*.gb*");
 
     /* skip the first N pages */
     if (num_page > 0)
@@ -1039,7 +1041,7 @@ int main(void)
 #endif
 
 #if ENABLE_LCD
-        set_spi_speed(SYS_CLK_FREQ / 4);
+        set_spi_speed(LCD_BAUDRATE);
         clear_screen();
 #endif
         /* Initialize Game Boy emulator */
@@ -1075,23 +1077,26 @@ int main(void)
 #endif
 
         DBG_INFO("\n> ");
+#if ENABLE_DEBUG
         uint_fast32_t frames = 0;
         uint64_t start_time = time_us_64();
+#endif
         while (1)
         {
             int input;
 
             /* Execute CPU cycles until the screen has to be redrawn. */
             gb_run_frame(&gb);
+
+#if ENABLE_DEBUG
             frames++;
+#endif
 
 #if ENABLE_SOUND
-            if (!gb.direct.frame_skip)
-            {
-                q_audio = AUDIO_CMD_PLAYBACK;
-                queue_add_blocking(&call_queue, &q_audio);
-            }
+            q_audio = AUDIO_CMD_PLAYBACK;
+            queue_add_blocking(&call_queue, &q_audio);
 #endif
+
             /* Update buttons state */
             prev_joypad_bits.up = gb.direct.joypad_bits.up;
             prev_joypad_bits.down = gb.direct.joypad_bits.down;
@@ -1110,7 +1115,7 @@ int main(void)
             gb.direct.joypad_bits.select = input_pins[KEY_SELECT] == 0 ? 1 : 0;
             gb.direct.joypad_bits.start = input_pins[KEY_START] == 0 ? 1 : 0;
 
-            /* hotkeys (select + * combo)*/
+            /* hotkeys (select + * combo) */
             if (!gb.direct.joypad_bits.select)
             {
 #if ENABLE_SOUND
