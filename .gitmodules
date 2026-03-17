@@ -1,9 +1,6 @@
 [submodule "ext/pico-sdk"]
 	path = ext/pico-sdk
 	url = https://github.com/raspberrypi/pico-sdk.git
-[submodule "ext/peanut-gb"]
-	path = ext/peanut-gb
-	url = https://github.com/deltabeard/Peanut-GB.git
 [submodule "ext/hedley"]
 	path = ext/hedley
 	url = https://github.com/nemequ/hedley.git
