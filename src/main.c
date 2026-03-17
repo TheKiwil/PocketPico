@@ -19,20 +19,21 @@
  * 
  * This file contains the main program for the PocketPico Game Boy emulator.
  * It handles ROM loading, display rendering, input processing, save file management,
- * and audio playback using the Peanut-GB emulator core.
+ * and audio playback using the Walnut-CGB emulator core.
  */
 
-// Peanut-GB emulator settings
+// Walnut-CGB emulator settings
 /* Core emulator feature configuration */
 #define ENABLE_LCD 1                  // Enable LCD display output
 #define ENABLE_SOUND 1                // Enable sound output
 #define ENABLE_SDCARD 1               // Enable SD card for ROM and save storage
-#define PEANUT_GB_HIGH_LCD_ACCURACY 1 // Use high accuracy LCD emulation
-#define PEANUT_GB_USE_BIOS 0          // Don't use GB BIOS (use built-in boot code)
-#define PEANUT_FULL_GBC_SUPPORT 1     // Enable full Game Boy Color support
+#define WALNUT_GB_HIGH_LCD_ACCURACY 1 // Use high accuracy LCD emulation
+//#define PEANUT_GB_USE_BIOS 0          // Don't use GB BIOS (use built-in boot code)
+//#define PEANUT_FULL_GBC_SUPPORT 1     // Enable full Game Boy Color support
+#define WALNUT_FULL_GBC_SUPPORT 1     // Enable full Game
 #if PICO_RP2040
     #define VREG_VOLT VREG_VOLTAGE_1_15
-    #define SYS_CLK_FREQ 266 * MHZ        // Set system clock to 300 MHz
+    #define SYS_CLK_FREQ 300 * MHZ        // Set system clock to 300 MHz
 #elif PICO_RP2350
     #define VREG_VOLT VREG_VOLTAGE_1_30
     #define SYS_CLK_FREQ 360 * MHZ        // Set system clock to 360 MHz
@@ -44,19 +45,6 @@
 #define USE_ILI9225 0                 // Disable ILI9225 display driver
 #define USE_ILI9488 1                 // Enable ILI9488 display driver
 #define LCD_BAUDRATE 80000000         // Set fast SPI baud rate for LCD
-
-/**
- * VSYNC Timing Configuration
- * 
- * Reduces VSYNC calculation to a lower multiple for better performance.
- * When setting a clock IRQ to DMG_CLOCK_FREQ_REDUCED, count to
- * SCREEN_REFRESH_CYCLES_REDUCED to obtain the time required for each VSYNC.
- * DMG_CLOCK_FREQ_REDUCED = 2^18, and SCREEN_REFRESH_CYCLES_REDUCED = 4389.
- * Currently unused.
- */
-#define VSYNC_REDUCTION_FACTOR 16u
-#define SCREEN_REFRESH_CYCLES_REDUCED (SCREEN_REFRESH_CYCLES / VSYNC_REDUCTION_FACTOR)
-#define DMG_CLOCK_FREQ_REDUCED (DMG_CLOCK_FREQ / VSYNC_REDUCTION_FACTOR)
 
 /* Standard C Headers */
 #include <stdlib.h>
@@ -412,7 +400,7 @@ void lcd_draw_line(struct gb_s *gb, const uint8_t pixels[LCD_WIDTH],
                        const uint_fast8_t line)
 {
     // Duplicate each pixel horizontally (160 -> 320 pixels)
-#if PEANUT_FULL_GBC_SUPPORT
+#if PEANUT_FULL_GBC_SUPPORT || WALNUT_FULL_GBC_SUPPORT
     if (gb->cgb.cgbMode)
     {
         for (unsigned int x = 0; x < LCD_WIDTH; x++)
@@ -442,7 +430,7 @@ void lcd_draw_line(struct gb_s *gb, const uint8_t pixels[LCD_WIDTH],
             pixels_buffer[x * 4 + 2] = (uint8_t)(pixel >> 8);   // high byte of second pixel
             pixels_buffer[x * 4 + 3] = (uint8_t)(pixel & 0xFF); // low byte of second pixel
         }
-#if PEANUT_FULL_GBC_SUPPORT
+#if PEANUT_FULL_GBC_SUPPORT || WALNUT_FULL_GBC_SUPPORT
     }
 #endif
 
@@ -1132,8 +1120,8 @@ int main(void)
             int input;
 
             /* Execute CPU cycles until the screen has to be redrawn. */
-            gb_run_frame(&gb);
-
+            //gb_run_frame(&gb);
+            gb_run_frame_dualfetch(&gb);
 #if ENABLE_DEBUG
             frames++;
 #endif
