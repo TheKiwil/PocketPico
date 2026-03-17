@@ -29,12 +29,17 @@ typedef enum
 
 #define KEY_A 0
 #define KEY_B 1
+#define KEY_ENTER 9
 #define KEY_START 3
 #define KEY_SELECT 2
 #define KEY_RIGHT 7
 #define KEY_DOWN 5
 #define KEY_LEFT 6
 #define KEY_UP 4
+#define KEY_F1 4
+#define KEY_F2 4
+#define KEY_F3 4
+#define KEY_F4 4
 
 static const uint8_t KEYCHECKTIME = 16;
 static const uint TICKSPERSEC   = 1000;   /* Ticks per second */

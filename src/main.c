@@ -35,15 +35,14 @@
     #define SYS_CLK_FREQ 266 * MHZ        // Set system clock to 300 MHz
 #elif PICO_RP2350
     #define VREG_VOLT VREG_VOLTAGE_1_30
-    #define SYS_CLK_FREQ 360 * MHZ        // Set system clock to 300 MHz
+    #define SYS_CLK_FREQ 360 * MHZ        // Set system clock to 360 MHz
 #endif
 
-#define ENABLE_DEBUG 1                // Enable debug output
+#define ENABLE_DEBUG 0                // Enable debug output
 
 /* Display hardware configuration */
 #define USE_ILI9225 0                 // Disable ILI9225 display driver
 #define USE_ILI9488 1                 // Enable ILI9488 display driver
-//#define LCD_BAUDRATE 75000000       // Set SPI baud rate for LCD
 #define LCD_BAUDRATE 80000000         // Set fast SPI baud rate for LCD
 
 /**
@@ -143,8 +142,6 @@ struct gb_s;
 #include "walnut_cgb.h"
 #endif
 
-
-
 /**
  * ROM Storage Configuration
  * 
@@ -157,8 +154,12 @@ struct gb_s;
 const uint8_t *rom = (const uint8_t *)(XIP_BASE + FLASH_TARGET_OFFSET);
 static unsigned char rom_bank0[65536];     // 64KB buffer for ROM bank 0
 
-//static uint8_t ram[32768];                 // 32KB buffer for cartridge RAM
-static uint8_t ram[0x40000];                 // 32KB buffer for cartridge RAM
+#if PICO_RP2040
+static uint8_t ram[0x4000];                  // 16KB buffer for cartridge RAM
+#elif PICO_RP2350
+static uint8_t ram[0x40000];                 // 256KB buffer for cartridge RAM
+#endif
+
 static int lcd_line_busy = 0;              // Flag for LCD line rendering status
 static palette_t palette;                  // Current color palette
 static uint8_t manual_palette_selected = 0; // Index of manually selected palette
@@ -179,7 +180,19 @@ static struct
     unsigned left : 1;     // Left direction
     unsigned up : 1;       // Up direction
     unsigned down : 1;     // Down direction
+    unsigned F1 : 1;       // F1 button
+    unsigned F2 : 1;       // F2 button
+    unsigned F3 : 1;       // F3 button
+    unsigned F4 : 1;       // F4 button
 } prev_joypad_bits;
+
+static struct
+{
+    unsigned F1 : 1;       // F1 button (if used)
+    unsigned F2 : 1;       // F2 button (if used)
+    unsigned F3 : 1;       // F3 button (if used)
+    unsigned F4 : 1;       // F4 button (if used)
+} other_joypad_bits;
 
 /* Display Buffer Configuration */
 #define FRAME_BUFF_WIDTH 320                  // Width of frame buffer
@@ -900,6 +913,7 @@ void rom_file_selector()
     {
         switch (wait_key())
         {
+        case KEY_ENTER:
         case KEY_A:
         case KEY_B:
             DBG_INFO("ROM File Selector: A/B button pressed - loading ROM: %s\n", filename[selected]);
@@ -1138,6 +1152,11 @@ int main(void)
             prev_joypad_bits.b = gb.direct.joypad_bits.b;
             prev_joypad_bits.select = gb.direct.joypad_bits.select;
             prev_joypad_bits.start = gb.direct.joypad_bits.start;
+            prev_joypad_bits.F1 = other_joypad_bits.F1;
+            prev_joypad_bits.F2 = other_joypad_bits.F2;
+            prev_joypad_bits.F3 = other_joypad_bits.F3;
+            prev_joypad_bits.F4 = other_joypad_bits.F4;
+
             gb.direct.joypad_bits.up = input_pins[KEY_UP] == 0 ? 1 : 0;
             gb.direct.joypad_bits.down = input_pins[KEY_DOWN] == 0 ? 1 : 0;
             gb.direct.joypad_bits.left = input_pins[KEY_LEFT] == 0 ? 1 : 0;
@@ -1146,9 +1165,13 @@ int main(void)
             gb.direct.joypad_bits.b = input_pins[KEY_B] == 0 ? 1 : 0;
             gb.direct.joypad_bits.select = input_pins[KEY_SELECT] == 0 ? 1 : 0;
             gb.direct.joypad_bits.start = input_pins[KEY_START] == 0 ? 1 : 0;
+            other_joypad_bits.F1 = input_pins[KEY_F1] == 0 ? 1 : 0;
+            other_joypad_bits.F2 = input_pins[KEY_F2] == 0 ? 1 : 0;
+            other_joypad_bits.F3 = input_pins[KEY_F3] == 0 ? 1 : 0;
+            other_joypad_bits.F4 = input_pins[KEY_F4] == 0 ? 1 : 0;
 
-            /* hotkeys (select + * combo) */
-            if (!gb.direct.joypad_bits.select)
+            /* F2 + UP/DOWN, volume */
+            if (!other_joypad_bits.F2)
             {
 #if ENABLE_SOUND
                 if (!gb.direct.joypad_bits.up && prev_joypad_bits.up)
@@ -1164,42 +1187,48 @@ int main(void)
                     queue_add_blocking(&call_queue, &q_audio);
                 }
 #endif
-                if (!gb.direct.joypad_bits.right && prev_joypad_bits.right)
+            }
+
+            /* F3 + UP/DOWN, manual color palette */
+            if (!other_joypad_bits.F3)
+            {
+                if (!gb.direct.joypad_bits.up && prev_joypad_bits.up)
                 {
-                    /* select + right: select the next manual color palette */
                     if (manual_palette_selected < 12)
                     {
                         manual_palette_selected++;
                         manual_assign_palette(palette, manual_palette_selected);
                     }
                 }
-                if (!gb.direct.joypad_bits.left && prev_joypad_bits.left)
+                if (!gb.direct.joypad_bits.down && prev_joypad_bits.down)
                 {
-                    /* select + left: select the previous manual color palette */
                     if (manual_palette_selected > 0)
                     {
                         manual_palette_selected--;
                         manual_assign_palette(palette, manual_palette_selected);
                     }
                 }
-                if (!gb.direct.joypad_bits.start && prev_joypad_bits.start)
-                {
-                    /* select + start: save ram and resets to the game selection menu */
-#if ENABLE_SDCARD
-                    write_cart_ram_file(&gb);
-                    /* Try to save the emulator state for this game. */
-                    write_gb_emulator_state(&gb);
-#endif
-                    goto out;
-                }
-                if (!gb.direct.joypad_bits.a && prev_joypad_bits.a)
-                {
-                    /* select + A: enable/disable frame-skip => fast-forward */
-                    gb.direct.frame_skip = !gb.direct.frame_skip;
-                    DBG_INFO("I gb.direct.frame_skip = %d\n", gb.direct.frame_skip);
-                }
             }
 
+            /* F1, save ram and resets to the game selection menu */
+            if (!other_joypad_bits.F1 && prev_joypad_bits.F1)
+            {
+#if ENABLE_SDCARD
+                write_cart_ram_file(&gb);
+                /* Try to save the emulator state for this game. */
+                write_gb_emulator_state(&gb);
+#endif
+                goto out;
+            }
+            
+            /* F4, enable/disable frame-skip => fast-forward */
+            if (!other_joypad_bits.F4 && prev_joypad_bits.F4)
+            {
+                
+                gb.direct.frame_skip = !gb.direct.frame_skip;
+                DBG_INFO("I gb.direct.frame_skip = %d\n", gb.direct.frame_skip);
+            }
+            
 #if ENABLE_DEBUG
             /* Serial monitor commands */
             input = getchar_timeout_us(0);
