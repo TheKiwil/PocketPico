@@ -1129,7 +1129,6 @@ int main(void)
             q_audio = AUDIO_CMD_PLAYBACK;
             queue_add_blocking(&call_queue, &q_audio);
 #endif
-
             /* Update buttons state */
             prev_joypad_bits.up = gb.direct.joypad_bits.up;
             prev_joypad_bits.down = gb.direct.joypad_bits.down;
