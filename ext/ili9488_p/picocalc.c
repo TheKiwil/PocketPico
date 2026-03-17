@@ -389,7 +389,8 @@ uint8_t keycheck = 0;
 uint8_t keyread = 0;
 int input_pins[] = {
     PIN_PAD_A, PIN_PAD_B, PIN_PAD_SELECT, PIN_PAD_START,
-    PIN_PAD_UP, PIN_PAD_DOWN, PIN_PAD_LEFT, PIN_PAD_RIGHT};
+    PIN_PAD_UP, PIN_PAD_DOWN, PIN_PAD_LEFT, PIN_PAD_RIGHT,
+    PIN_PAD_ENTER, PIN_PAD_F1, PIN_PAD_F2, PIN_PAD_F3, PIN_PAD_F4};
 
 static void __attribute__((optimize("-Os"))) __not_in_flash_func(timer_tick_cb)(unsigned alarm)
 {
@@ -509,6 +510,21 @@ void kbd_interrupt()
             break;
         case ']': // A
             set_kdb_key(0, key_stat);
+            break;
+        case 0x0A: // ENTER
+            set_kdb_key(8, key_stat);
+            break;
+        case 0x81: // F1
+            set_kdb_key(9, key_stat);
+            break;
+        case 0x82: // F2
+            set_kdb_key(10, key_stat);
+            break;
+        case 0x83: // F3
+            set_kdb_key(11, key_stat);
+            break;
+        case 0x84: // F4
+            set_kdb_key(12, key_stat);
             break;
         default:
             break;

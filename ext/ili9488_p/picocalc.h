@@ -29,17 +29,17 @@ typedef enum
 
 #define KEY_A 0
 #define KEY_B 1
-#define KEY_ENTER 9
 #define KEY_START 3
 #define KEY_SELECT 2
 #define KEY_RIGHT 7
 #define KEY_DOWN 5
 #define KEY_LEFT 6
 #define KEY_UP 4
-#define KEY_F1 4
-#define KEY_F2 4
-#define KEY_F3 4
-#define KEY_F4 4
+#define KEY_ENTER 8
+#define KEY_F1 9
+#define KEY_F2 10
+#define KEY_F3 11
+#define KEY_F4 12
 
 static const uint8_t KEYCHECKTIME = 16;
 static const uint TICKSPERSEC   = 1000;   /* Ticks per second */
@@ -51,6 +51,11 @@ static const int PIN_PAD_RIGHT  = 0;
 static const int PIN_PAD_DOWN   = 0;
 static const int PIN_PAD_LEFT   = 0;
 static const int PIN_PAD_UP     = 0;
+static const int PIN_PAD_ENTER  = 0;
+static const int PIN_PAD_F1     = 0;
+static const int PIN_PAD_F2     = 0;
+static const int PIN_PAD_F3     = 0;
+static const int PIN_PAD_F4     = 0;
 extern int input_pins[];
 
 // setup GPIO, PIO, LCD
