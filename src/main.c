@@ -29,7 +29,7 @@
 #define ENABLE_SDCARD 1               // Enable SD card for ROM and save storage
 #define PEANUT_GB_HIGH_LCD_ACCURACY 1 // Use high accuracy LCD emulation
 #define PEANUT_GB_USE_BIOS 0          // Don't use GB BIOS (use built-in boot code)
-#define PEANUT_FULL_GBC_SUPPORT 1     // Disable full Game Boy Color support
+#define PEANUT_FULL_GBC_SUPPORT 1     // Enable full Game Boy Color support
 #if PICO_RP2040
     #define VREG_VOLT VREG_VOLTAGE_1_15
     #define SYS_CLK_FREQ 266 * MHZ        // Set system clock to 300 MHz
@@ -38,7 +38,7 @@
     #define SYS_CLK_FREQ 360 * MHZ        // Set system clock to 300 MHz
 #endif
 
-//#define ENABLE_DEBUG 0                // Enable debug output
+#define ENABLE_DEBUG 1                // Enable debug output
 
 /* Display hardware configuration */
 #define USE_ILI9225 0                 // Disable ILI9225 display driver
@@ -134,12 +134,16 @@ struct minigb_apu_ctx apu_ctx = {0};
 #define SPK_PWM_FREQ 22050     // PWM frequency for audio output
 
 #include "audio.h"
-#include "peanut_gb.h"
+struct gb_s;
+#include "walnut_cgb.h"
 #undef audio_read
 #undef audio_write
 #else
-#include "peanut_gb.h"
+struct gb_s;
+#include "walnut_cgb.h"
 #endif
+
+
 
 /**
  * ROM Storage Configuration
@@ -153,7 +157,8 @@ struct minigb_apu_ctx apu_ctx = {0};
 const uint8_t *rom = (const uint8_t *)(XIP_BASE + FLASH_TARGET_OFFSET);
 static unsigned char rom_bank0[65536];     // 64KB buffer for ROM bank 0
 
-static uint8_t ram[32768];                 // 32KB buffer for cartridge RAM
+//static uint8_t ram[32768];                 // 32KB buffer for cartridge RAM
+static uint8_t ram[0x40000];                 // 32KB buffer for cartridge RAM
 static int lcd_line_busy = 0;              // Flag for LCD line rendering status
 static palette_t palette;                  // Current color palette
 static uint8_t manual_palette_selected = 0; // Index of manually selected palette
@@ -194,13 +199,38 @@ static uint8_t pixels_buffer[WIDTH*2] = {0};
  * @param addr Address to read from
  * @return The byte at the specified address
  */
-uint8_t gb_rom_read(struct gb_s *gb, const uint_fast32_t addr)
+uint8_t gb_rom_read_8bit(struct gb_s *gb, const uint_fast32_t addr)
 {
     (void)gb;
     if (addr < sizeof(rom_bank0))
         return rom_bank0[addr];
+    else
+        return rom[addr];
+}
 
-    return rom[addr];
+uint16_t gb_rom_read_16bit(struct gb_s *gb, const uint_fast32_t addr)
+{
+    (void)gb;
+    uint16_t val;
+
+    if (addr < sizeof(rom_bank0))
+        memcpy(&val, &rom_bank0[addr], sizeof(val));
+    else
+        memcpy(&val, &rom[addr], sizeof(val));
+
+    return val;
+}
+
+uint32_t gb_rom_read_32bit(struct gb_s *gb, const uint_fast32_t addr) {
+    (void)gb;
+    uint32_t val;
+
+    if (addr < sizeof(rom_bank0))
+        memcpy(&val, &rom_bank0[addr], sizeof(val));
+    else
+        memcpy(&val, &rom[addr], sizeof(val));
+
+    return val;
 }
 
 /**
@@ -435,11 +465,11 @@ void lcd_draw_line(struct gb_s *gb, const uint8_t pixels[LCD_WIDTH],
 void read_cart_ram_file(struct gb_s *gb)
 {
     char filename[16];
-    uint_fast32_t save_size;
+    size_t save_size = 0;
     UINT br;
 
     gb_get_rom_name(gb, filename);
-    save_size = gb_get_save_size(gb);
+    gb_get_save_size_s(gb, &save_size);
     if (save_size > 0)
     {
         sd_card_t *pSD = sd_get_by_num(0);
@@ -486,11 +516,11 @@ void read_cart_ram_file(struct gb_s *gb)
 void write_cart_ram_file(struct gb_s *gb)
 {
     char filename[16];
-    uint_fast32_t save_size;
+    size_t save_size = 0;
     UINT bw;
 
     gb_get_rom_name(gb, filename);
-    save_size = gb_get_save_size(gb);
+    gb_get_save_size_s(gb, &save_size);
     if (save_size > 0)
     {
         sd_card_t *sd = sd_get_by_num(0);
@@ -1047,7 +1077,9 @@ int main(void)
         /* Initialize Game Boy emulator */
         memcpy(rom_bank0, rom, sizeof(rom_bank0));  // Copy ROM bank 0 to RAM for faster access
         ret = gb_init(&gb,                          // Initialize Game Boy context
-                     &gb_rom_read,                  // ROM read callback
+                     &gb_rom_read_8bit,             // 8-bit ROM read callback
+                     &gb_rom_read_16bit,            // 16-bit ROM read callback
+                     &gb_rom_read_32bit,            // 32-bit ROM read callback
                      &gb_cart_ram_read,             // RAM read callback
                      &gb_cart_ram_write,            // RAM write callback
                      &gb_error,                     // Error handling callback

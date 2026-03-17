@@ -34,7 +34,7 @@ add_executable(PocketPico
         ext/minigb_apu/minigb_apu.c
 )
 
-target_include_directories(PocketPico PRIVATE inc ext/hedley ext/peanut-gb ext/minigb_apu)
+target_include_directories(PocketPico PRIVATE inc ext/hedley ext/Walnut-CGB ext/minigb_apu)
 
 target_link_libraries(PocketPico
         FatFs_SPI
