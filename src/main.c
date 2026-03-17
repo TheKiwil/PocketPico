@@ -1060,7 +1060,7 @@ int main(void)
     
     stdio_init_all();                        // Initialize standard I/O
     DBG_INIT();                              // Initialize debug output
-    DBG_INFO("INIT: ");                      // Print initialization message
+    DBG_INFO("INIT: Version %d.%d.%d\n", PROJECT_VERSION_MAJOR, PROJECT_VERSION_MINOR, PROJECT_VERSION_PATCH); // Print initialization message
 
     /* Initialize subsystems */
 #if ENABLE_SOUND

@@ -14,12 +14,12 @@ endif()
 # ====================================================================================
 cmake_minimum_required(VERSION 3.13...3.23)
 
-set(PICO_PLATFORM rp2040)
-set(PICO_BOARD pico CACHE STRING "Board type")
+set(PICO_PLATFORM rp2350)
+set(PICO_BOARD pico2 CACHE STRING "Board type")
 
 include(pico_sdk_import.cmake)
 
-project(PocketPico C CXX ASM)
+project(PocketPico VERSION 2.1.0 LANGUAGES C CXX ASM)
 set(CMAKE_C_STANDARD 11)
 set(CMAKE_CXX_STANDARD 17)
 
@@ -44,6 +44,9 @@ target_link_libraries(PocketPico
         pico_binary_info ili9488_p audio)
         
 target_compile_definitions(PocketPico PRIVATE
+        PROJECT_VERSION_MAJOR=${PROJECT_VERSION_MAJOR}
+        PROJECT_VERSION_MINOR=${PROJECT_VERSION_MINOR}
+        PROJECT_VERSION_PATCH=${PROJECT_VERSION_PATCH}
         PARAM_ASSERTIONS_DISABLE_ALL=1
         PICO_ENTER_USB_BOOT_ON_EXIT=1
         PICO_STDIO_ENABLE_CRLF_SUPPORT=0
