@@ -1086,8 +1086,7 @@ int main(void)
                      &gb_cart_ram_write,            // RAM write callback
                      &gb_error,                     // Error handling callback
                      NULL);                         // No custom context
-        DBG_INFO("GB ");
-
+        
         if (ret != GB_INIT_NO_ERROR)
         {
             DBG_INFO("Error: %d\n", ret);
