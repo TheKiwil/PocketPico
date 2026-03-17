@@ -10,3 +10,6 @@
 [submodule "ext/minigb_apu"]
 	path = ext/minigb_apu
 	url = https://github.com/deltabeard/minigb_apu.git
+[submodule "ext/Walnut-CGB"]
+	path = ext/Walnut-CGB
+	url = https://github.com/Mr-PauI/Walnut-CGB.git
