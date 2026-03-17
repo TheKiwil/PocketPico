@@ -1113,11 +1113,10 @@ int main(void)
 #if ENABLE_DEBUG
         uint_fast32_t frames = 0;
         uint64_t start_time = time_us_64();
+        int input;
 #endif
         while (1)
         {
-            int input;
-
             /* Execute CPU cycles until the screen has to be redrawn. */
             //gb_run_frame(&gb);
             gb_run_frame_dualfetch(&gb);
