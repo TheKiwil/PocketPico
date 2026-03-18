@@ -35,7 +35,7 @@
     #define SYS_CLK_FREQ 300 * MHZ        // Set system clock to 300 MHz
 #elif PICO_RP2350
     #define VREG_VOLT VREG_VOLTAGE_1_30
-    #define SYS_CLK_FREQ 340 * MHZ        // Set system clock to 340 MHz
+    #define SYS_CLK_FREQ 360 * MHZ        // Set system clock to 360 MHz
 #endif
 
 #define ENABLE_DEBUG 0                // Enable debug output
@@ -438,6 +438,9 @@ void lcd_draw_line(struct gb_s *gb, const uint8_t pixels[LCD_WIDTH],
     {
         // Double the width when starting the window
         start_window((WIDTH - (LCD_WIDTH * 2)) / 2, ((HEIGHT - (LCD_HEIGHT * 2)) / 2), LCD_WIDTH * 2, LCD_HEIGHT * 2);
+        write_data(pixels_buffer, LCD_WIDTH * 2);
+        finish_write_data(false);
+        write_data(pixels_buffer, LCD_WIDTH * 2);
     }
     else if (line == LCD_HEIGHT)
     {
