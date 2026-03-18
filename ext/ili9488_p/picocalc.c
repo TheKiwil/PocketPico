@@ -391,6 +391,8 @@ int input_pins[] = {
     PIN_PAD_A, PIN_PAD_B, PIN_PAD_SELECT, PIN_PAD_START,
     PIN_PAD_UP, PIN_PAD_DOWN, PIN_PAD_LEFT, PIN_PAD_RIGHT,
     PIN_PAD_ENTER, PIN_PAD_F1, PIN_PAD_F2, PIN_PAD_F3, PIN_PAD_F4};
+    
+#define NUM_INPUT_PINS (sizeof(input_pins) / sizeof(input_pins[0]))
 
 static void __attribute__((optimize("-Os"))) __not_in_flash_func(timer_tick_cb)(unsigned alarm)
 {
@@ -553,7 +555,7 @@ int wait_key()
     for (;;)
     {
         sleep_ms(10);
-        for (i = 0; i < 8; i++)
+        for (i = 0; i < NUM_INPUT_PINS; i++)
         {
             if (input_pins[i] == 1)
             {

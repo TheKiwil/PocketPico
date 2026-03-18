@@ -896,7 +896,7 @@ void rom_file_selector()
     draw_string(0, (selected % 22) * 20, "=>");
 
     /* get user's input */
-    bool up = true, down = true, left = true, right = true, a = true, b = true, select = true, start = true;
+    //bool up = true, down = true, left = true, right = true, a = true, b = true, select = true, start = true;
     while (true)
     {
         switch (wait_key())
