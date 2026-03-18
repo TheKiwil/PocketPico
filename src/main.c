@@ -142,7 +142,7 @@ const uint8_t *rom = (const uint8_t *)(XIP_BASE + FLASH_TARGET_OFFSET);
 static unsigned char rom_bank0[65536];     // 64KB buffer for ROM bank 0
 
 #if PICO_RP2040
-static uint8_t ram[0x4000];                  // 16KB buffer for cartridge RAM
+static uint8_t ram[0x1000];                  // 4KB buffer for cartridge RAM
 #elif PICO_RP2350
 static uint8_t ram[0x40000];                 // 256KB buffer for cartridge RAM
 #endif
