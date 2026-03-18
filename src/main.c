@@ -28,15 +28,14 @@
 #define ENABLE_SOUND 1                // Enable sound output
 #define ENABLE_SDCARD 1               // Enable SD card for ROM and save storage
 #define WALNUT_GB_HIGH_LCD_ACCURACY 1 // Use high accuracy LCD emulation
-//#define PEANUT_GB_USE_BIOS 0          // Don't use GB BIOS (use built-in boot code)
-//#define PEANUT_FULL_GBC_SUPPORT 1     // Enable full Game Boy Color support
-#define WALNUT_FULL_GBC_SUPPORT 1     // Enable full Game
+#define WALNUT_FULL_GBC_SUPPORT 1     // Enable full Game Boy support
+#define PEANUT_FULL_GBC_SUPPORT 1     // Enable full Game Boy Color support
 #if PICO_RP2040
     #define VREG_VOLT VREG_VOLTAGE_1_15
     #define SYS_CLK_FREQ 300 * MHZ        // Set system clock to 300 MHz
 #elif PICO_RP2350
     #define VREG_VOLT VREG_VOLTAGE_1_30
-    #define SYS_CLK_FREQ 360 * MHZ        // Set system clock to 360 MHz
+    #define SYS_CLK_FREQ 340 * MHZ        // Set system clock to 340 MHz
 #endif
 
 #define ENABLE_DEBUG 0                // Enable debug output
