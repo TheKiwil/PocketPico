@@ -147,7 +147,6 @@ static uint8_t ram[0x1000];                  // 4KB buffer for cartridge RAM
 static uint8_t ram[0x40000];                 // 256KB buffer for cartridge RAM
 #endif
 
-static int lcd_line_busy = 0;              // Flag for LCD line rendering status
 static palette_t palette;                  // Current color palette
 static uint8_t manual_palette_selected = 0; // Index of manually selected palette
 
@@ -864,6 +863,11 @@ uint16_t rom_file_selector_display_page(char filename[22][256], uint16_t num_pag
         draw_string(20, ifile * 20, filename[ifile]);
     }
     
+    /* display version on bottom right corner */
+    char ver_buf[16];
+    snprintf(ver_buf, sizeof(ver_buf), "v%d.%d.%d", PROJECT_VERSION_MAJOR, PROJECT_VERSION_MINOR, PROJECT_VERSION_PATCH);
+    draw_string(FRAME_BUFF_WIDTH - (strlen(ver_buf) * 9), FRAME_BUFF_HEIGHT - 20, ver_buf);
+    
     return num_file;
 }
 
@@ -881,7 +885,7 @@ void rom_file_selector()
     uint16_t num_page = 0;
     char filename[22][256];
     uint16_t num_file;
-    char buf[6];
+    char buf[256];
     bool break_outer = false;
 
     /* display the first page with up to 22 rom files */
@@ -890,15 +894,12 @@ void rom_file_selector()
 
     /* select the first rom */
     uint8_t selected = 0;
-    DBG_INFO("ROM File Selector: Waiting 5 seconds before highlighting first ROM\n");
-
     DBG_INFO("ROM File Selector: Highlighting first ROM: %s\n", filename[selected]);
     sprintf(buf, "%02d", selected + 1);
     draw_string(0, FRAME_BUFF_HEIGHT - 20, buf);
     draw_string(0, (selected % 22) * 20, "=>");
 
     /* get user's input */
-    //bool up = true, down = true, left = true, right = true, a = true, b = true, select = true, start = true;
     while (true)
     {
         switch (wait_key())
@@ -917,6 +918,7 @@ void rom_file_selector()
             break_outer = true;
             break;
 
+        case KEY_SELECT:
         case KEY_START:
             DBG_INFO("ROM File Selector: Start button pressed - resuming last game\n");
             break_outer = true;
@@ -1040,8 +1042,6 @@ int main(void)
 {
     static struct gb_s gb;         // Game Boy emulator context
     enum gb_init_error_e ret;      // Initialization error code
-    const int buf_words = (16 * 4) + 1; // Maximum of 16 partitions, each with maximum of 4 words returned, plus 1
-    uint32_t *buffer = malloc(buf_words * 4);
 
     /* Initialize system hardware */
     vreg_set_voltage(VREG_VOLT);                  // Set voltage for overclocking
@@ -1120,7 +1120,6 @@ int main(void)
         while (1)
         {
             /* Execute CPU cycles until the screen has to be redrawn. */
-            //gb_run_frame(&gb);
             gb_run_frame_dualfetch(&gb);
 #if ENABLE_DEBUG
             frames++;
@@ -1211,7 +1210,6 @@ int main(void)
             /* F4, enable/disable frame-skip => fast-forward */
             if (!other_joypad_bits.F4 && prev_joypad_bits.F4)
             {
-                
                 gb.direct.frame_skip = !gb.direct.frame_skip;
                 DBG_INFO("I gb.direct.frame_skip = %d\n", gb.direct.frame_skip);
             }
